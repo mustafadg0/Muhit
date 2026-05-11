@@ -28,6 +28,7 @@ builder.Services.AddScoped<IAiNeighborhoodAnalysisService, AiNeighborhoodAnalysi
 builder.Services.AddScoped<INeighborhoodHomeService, NeighborhoodHomeService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
