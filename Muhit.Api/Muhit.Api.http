@@ -1,0 +1,6 @@
+@Muhit.Api_HostAddress = http://localhost:5244
+
+GET {{Muhit.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
