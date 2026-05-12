@@ -23,24 +23,28 @@ public class ReviewService : IReviewService
         var response = new BaseResponse<NeighborhoodReviewItemResponse>();
 
         var neighborhoodExists = await _context.Neighborhoods
-            .AnyAsync(x => x.Id == request.NeighborhoodId);
+            .AnyAsync(x =>
+                x.Id == request.NeighborhoodId &&
+                x.IsActive &&
+                !x.IsDeleted);
 
         if (!neighborhoodExists)
         {
             response.Success = false;
             response.Message = "Mahalle bulunamadı.";
-
             return response;
         }
 
         var userExists = await _context.AppUsers
-            .AnyAsync(x => x.Id == request.AppUserId);
+            .AnyAsync(x =>
+                x.Id == request.AppUserId &&
+                x.IsActive &&
+                !x.IsDeleted);
 
         if (!userExists)
         {
             response.Success = false;
             response.Message = "Kullanıcı bulunamadı.";
-
             return response;
         }
 
@@ -54,24 +58,34 @@ public class ReviewService : IReviewService
             SocialLifeScore = request.SocialLifeScore,
             CostScore = request.CostScore,
             Comment = request.Comment,
+            IsActive = true,
+            IsDeleted = false,
             CreatedDate = DateTime.UtcNow
         };
 
         await _context.NeighborhoodReviews.AddAsync(review);
-
         await _context.SaveChangesAsync();
 
         var createdReview = await _context.NeighborhoodReviews
             .AsNoTracking()
             .Include(x => x.AppUser)
-            .FirstOrDefaultAsync(x => x.Id == review.Id);
+            .FirstOrDefaultAsync(x =>
+                x.Id == review.Id &&
+                x.IsActive &&
+                !x.IsDeleted);
+
+        if (createdReview == null)
+        {
+            response.Success = false;
+            response.Message = "Yorum oluşturuldu ancak detay bilgisi getirilemedi.";
+            return response;
+        }
 
         response.Success = true;
         response.Message = "Yorum başarıyla oluşturuldu.";
-
         response.Data = new NeighborhoodReviewItemResponse
         {
-            Id = createdReview!.Id,
+            Id = createdReview.Id,
             AppUserId = createdReview.AppUserId,
             UserFullName = createdReview.AppUser.FullName,
             Comment = createdReview.Comment,

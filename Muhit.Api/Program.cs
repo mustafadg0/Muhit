@@ -27,7 +27,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAiNeighborhoodAnalysisService, AiNeighborhoodAnalysisService>();
 builder.Services.AddScoped<INeighborhoodHomeService, NeighborhoodHomeService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
-
+builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -35,12 +35,13 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 app.UseGlobalExceptionMiddleware();
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//    app.UseSwaggerUI();
+//}
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
 // JWT ekleyince bunun üstüne app.UseAuthentication(); gelecek

@@ -31,7 +31,10 @@ public class AuthService : IAuthService
 
         var email = request.Email.Trim().ToLower();
 
-        var emailExists = await _context.AppUsers.AnyAsync(x => x.Email == email);
+        var emailExists = await _context.AppUsers
+            .AnyAsync(x =>
+                x.Email == email &&
+                !x.IsDeleted);
 
         if (emailExists)
         {
@@ -42,7 +45,10 @@ public class AuthService : IAuthService
 
         if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
         {
-            var phoneExists = await _context.AppUsers.AnyAsync(x => x.PhoneNumber == request.PhoneNumber);
+            var phoneExists = await _context.AppUsers
+                .AnyAsync(x =>
+                    x.PhoneNumber == request.PhoneNumber &&
+                    !x.IsDeleted);
 
             if (phoneExists)
             {
@@ -62,8 +68,13 @@ public class AuthService : IAuthService
             PasswordHash = passwordHash,
             PasswordSalt = passwordSalt,
             CurrentNeighborhoodId = request.CurrentNeighborhoodId,
+
             IsEmailVerified = false,
             IsPhoneNumberVerified = false,
+
+            IsActive = true,
+            IsDeleted = false,
+
             CreatedDate = DateTime.UtcNow
         };
 
@@ -74,6 +85,7 @@ public class AuthService : IAuthService
 
         response.Success = true;
         response.Message = "Kayýt baþarýlý.";
+
         response.Data = new AuthResponse
         {
             UserId = user.Id,
@@ -92,13 +104,15 @@ public class AuthService : IAuthService
         var email = request.Email.Trim().ToLower();
 
         var user = await _context.AppUsers
-            .FirstOrDefaultAsync(x => x.Email == email);
+            .FirstOrDefaultAsync(x =>
+                x.Email == email &&
+                x.IsActive &&
+                !x.IsDeleted);
 
         if (user == null)
         {
             response.Success = false;
             response.Message = "Email veya þifre hatalý.";
-
             return response;
         }
 
@@ -111,11 +125,11 @@ public class AuthService : IAuthService
         {
             response.Success = false;
             response.Message = "Email veya þifre hatalý.";
-
             return response;
         }
 
         user.LastLoginDate = DateTime.UtcNow;
+        user.UpdatedDate = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
@@ -143,6 +157,7 @@ public class AuthService : IAuthService
         using var hmac = new HMACSHA512();
 
         passwordSalt = Convert.ToBase64String(hmac.Key);
+
         passwordHash = Convert.ToBase64String(
             hmac.ComputeHash(Encoding.UTF8.GetBytes(password)));
     }
@@ -156,7 +171,9 @@ public class AuthService : IAuthService
 
         using var hmac = new HMACSHA512(saltBytes);
 
-        var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+        var computedHash = hmac.ComputeHash(
+            Encoding.UTF8.GetBytes(password));
+
         var computedHashString = Convert.ToBase64String(computedHash);
 
         return computedHashString == storedHash;
@@ -175,15 +192,19 @@ public class AuthService : IAuthService
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.FullName),
-            new Claim(ClaimTypes.Email, user.Email)
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim("MembershipType", user.MembershipType.ToString())
         };
 
         if (user.CurrentNeighborhoodId.HasValue)
         {
-            claims.Add(new Claim("CurrentNeighborhoodId", user.CurrentNeighborhoodId.Value.ToString()));
+            claims.Add(new Claim(
+                "CurrentNeighborhoodId",
+                user.CurrentNeighborhoodId.Value.ToString()));
         }
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(secretKey));
 
         var credentials = new SigningCredentials(
             key,
@@ -196,6 +217,7 @@ public class AuthService : IAuthService
             expires: DateTime.UtcNow.AddMinutes(expireMinutes),
             signingCredentials: credentials);
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return new JwtSecurityTokenHandler()
+            .WriteToken(token);
     }
 }

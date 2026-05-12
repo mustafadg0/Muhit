@@ -58,4 +58,17 @@ public class UsersController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpPost("profile-image")]
+    public async Task<IActionResult> UploadProfileImage(IFormFile file)
+    {
+        var userId = 1; // TODO: JWT'den alınacak
+
+        var result = await _userService.UploadProfileImageAsync(userId, file);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
 }

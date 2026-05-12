@@ -40,7 +40,6 @@ public class NeighborhoodService : INeighborhoodService
         {
             response.Success = false;
             response.Message = "Mahalle bulunamadı.";
-
             return response;
         }
 
@@ -70,6 +69,13 @@ public class NeighborhoodService : INeighborhoodService
     {
         var response = new BaseResponse<List<NeighborhoodResponse>>();
 
+        if (string.IsNullOrWhiteSpace(keyword))
+        {
+            response.Success = false;
+            response.Message = "Arama kelimesi boş olamaz.";
+            return response;
+        }
+
         keyword = keyword.Trim().ToLower();
 
         var neighborhoods = await Query()
@@ -90,6 +96,13 @@ public class NeighborhoodService : INeighborhoodService
     {
         return _context.Neighborhoods
             .AsNoTracking()
+            .Where(x =>
+                x.IsActive &&
+                !x.IsDeleted &&
+                x.District.IsActive &&
+                !x.District.IsDeleted &&
+                x.District.City.IsActive &&
+                !x.District.City.IsDeleted)
             .Include(x => x.District)
             .ThenInclude(x => x.City)
             .Select(x => new NeighborhoodResponse

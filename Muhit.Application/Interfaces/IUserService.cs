@@ -1,4 +1,5 @@
-﻿using Muhit.Application.Common;
+﻿using Microsoft.AspNetCore.Http;
+using Muhit.Application.Common;
 using Muhit.Application.DTOs.User.Request;
 using Muhit.Application.DTOs.User.Response;
 
@@ -10,4 +11,7 @@ public interface IUserService
     Task<BaseResponse<UserResponse>> GetByIdAsync(int id);
     Task<BaseResponse<UserResponse>> UpdateAsync(UpdateUserRequest request);
     Task<BaseResponse<bool>> DeleteAsync(int id);
+    Task<BaseResponse<string>> UploadProfileImageAsync(
+     int userId,
+     IFormFile file);
 }

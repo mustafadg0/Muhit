@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Muhit.Application.Common;
 using Muhit.Application.DTOs.User.Request;
 using Muhit.Application.DTOs.User.Response;
@@ -10,10 +11,11 @@ namespace Muhit.Infrastructure.Services;
 public class UserService : IUserService
 {
     private readonly MuhitDbContext _context;
-
-    public UserService(MuhitDbContext context)
+    private readonly IBlobStorageService _blobStorageService;
+    public UserService(MuhitDbContext context, IBlobStorageService blobStorageService)
     {
         _context = context;
+        _blobStorageService = blobStorageService;
     }
 
     public async Task<BaseResponse<List<UserResponse>>> GetAllAsync()
@@ -56,7 +58,10 @@ public class UserService : IUserService
         var response = new BaseResponse<UserResponse>();
 
         var user = await _context.AppUsers
-            .FirstOrDefaultAsync(x => x.Id == request.Id);
+            .FirstOrDefaultAsync(x =>
+                x.Id == request.Id &&
+                x.IsActive &&
+                !x.IsDeleted);
 
         if (user == null)
         {
@@ -68,7 +73,10 @@ public class UserService : IUserService
         if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
         {
             var phoneExists = await _context.AppUsers
-                .AnyAsync(x => x.PhoneNumber == request.PhoneNumber && x.Id != request.Id);
+                .AnyAsync(x =>
+                    x.PhoneNumber == request.PhoneNumber &&
+                    x.Id != request.Id &&
+                    !x.IsDeleted);
 
             if (phoneExists)
             {
@@ -81,6 +89,7 @@ public class UserService : IUserService
         user.FullName = request.FullName.Trim();
         user.PhoneNumber = request.PhoneNumber;
         user.CurrentNeighborhoodId = request.CurrentNeighborhoodId;
+        user.UpdatedDate = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
@@ -96,7 +105,9 @@ public class UserService : IUserService
         var response = new BaseResponse<bool>();
 
         var user = await _context.AppUsers
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x =>
+                x.Id == id &&
+                !x.IsDeleted);
 
         if (user == null)
         {
@@ -106,7 +117,10 @@ public class UserService : IUserService
             return response;
         }
 
-        _context.AppUsers.Remove(user);
+        user.IsActive = false;
+        user.IsDeleted = true;
+        user.UpdatedDate = DateTime.UtcNow;
+
         await _context.SaveChangesAsync();
 
         response.Success = true;
@@ -116,10 +130,91 @@ public class UserService : IUserService
         return response;
     }
 
+    public async Task<BaseResponse<string>> UploadProfileImageAsync(
+        int userId,
+        IFormFile file)
+    {
+        var response = new BaseResponse<string>();
+
+        if (file == null || file.Length == 0)
+        {
+            response.Success = false;
+            response.Message = "Dosya boş.";
+            return response;
+        }
+
+        const int maxFileSize = 5 * 1024 * 1024;
+
+        if (file.Length > maxFileSize)
+        {
+            response.Success = false;
+            response.Message = "Maksimum dosya boyutu 5 MB olabilir.";
+            return response;
+        }
+
+        var allowedTypes = new[]
+        {
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+    };
+
+        if (!allowedTypes.Contains(file.ContentType))
+        {
+            response.Success = false;
+            response.Message = "Sadece jpg, png veya webp yüklenebilir.";
+            return response;
+        }
+
+        var extension = Path.GetExtension(file.FileName).ToLower();
+
+        var allowedExtensions = new[]
+        {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp"
+    };
+
+        if (!allowedExtensions.Contains(extension))
+        {
+            response.Success = false;
+            response.Message = "Geçersiz dosya uzantısı.";
+            return response;
+        }
+
+        var user = await _context.AppUsers.FindAsync(userId);
+
+        if (user == null)
+        {
+            response.Success = false;
+            response.Message = "Kullanıcı bulunamadı.";
+            return response;
+        }
+
+        if (!string.IsNullOrWhiteSpace(user.ProfileImageUrl))
+        {
+            await _blobStorageService.DeleteAsync(user.ProfileImageUrl);
+        }
+
+        var imageUrl = await _blobStorageService.UploadProfileImageAsync(userId, file);
+
+        user.ProfileImageUrl = imageUrl;
+        user.UpdatedDate = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        response.Success = true;
+        response.Message = "Profil resmi güncellendi.";
+        response.Data = imageUrl;
+
+        return response;
+    }
     private IQueryable<UserResponse> Query()
     {
         return _context.AppUsers
             .AsNoTracking()
+            .Where(x => x.IsActive && !x.IsDeleted)
             .Include(x => x.CurrentNeighborhood)
             .Select(x => new UserResponse
             {
@@ -134,7 +229,9 @@ public class UserService : IUserService
                     ? x.CurrentNeighborhood.Name
                     : null,
                 CreatedDate = x.CreatedDate,
-                LastLoginDate = x.LastLoginDate
+                LastLoginDate = x.LastLoginDate,
+                MembershipType = x.MembershipType,
+                ProfileImageUrl = x.ProfileImageUrl
             });
     }
 }
