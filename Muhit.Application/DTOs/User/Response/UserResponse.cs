@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Muhit.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,5 +19,6 @@ namespace Muhit.Application.DTOs.User.Response
         public string? CurrentNeighborhoodName { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime? LastLoginDate { get; set; }
+        public MembershipType MembershipType { get; set; }
     }
 }

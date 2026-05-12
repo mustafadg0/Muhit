@@ -28,7 +28,14 @@ public class NeighborhoodHomeService : INeighborhoodHomeService
             .AsNoTracking()
             .Include(x => x.District)
             .ThenInclude(x => x.City)
-            .FirstOrDefaultAsync(x => x.Id == neighborhoodId);
+            .FirstOrDefaultAsync(x =>
+                x.Id == neighborhoodId &&
+                x.IsActive &&
+                !x.IsDeleted &&
+                x.District.IsActive &&
+                !x.District.IsDeleted &&
+                x.District.City.IsActive &&
+                !x.District.City.IsDeleted);
 
         if (neighborhood == null)
         {
@@ -40,7 +47,12 @@ public class NeighborhoodHomeService : INeighborhoodHomeService
         var reviews = await _context.NeighborhoodReviews
             .AsNoTracking()
             .Include(x => x.AppUser)
-            .Where(x => x.NeighborhoodId == neighborhoodId)
+            .Where(x =>
+                x.NeighborhoodId == neighborhoodId &&
+                x.IsActive &&
+                !x.IsDeleted &&
+                x.AppUser.IsActive &&
+                !x.AppUser.IsDeleted)
             .OrderByDescending(x => x.CreatedDate)
             .Select(x => new NeighborhoodReviewItemResponse
             {

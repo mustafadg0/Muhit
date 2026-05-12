@@ -56,7 +56,10 @@ public class UserService : IUserService
         var response = new BaseResponse<UserResponse>();
 
         var user = await _context.AppUsers
-            .FirstOrDefaultAsync(x => x.Id == request.Id);
+            .FirstOrDefaultAsync(x =>
+                x.Id == request.Id &&
+                x.IsActive &&
+                !x.IsDeleted);
 
         if (user == null)
         {
@@ -68,7 +71,10 @@ public class UserService : IUserService
         if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
         {
             var phoneExists = await _context.AppUsers
-                .AnyAsync(x => x.PhoneNumber == request.PhoneNumber && x.Id != request.Id);
+                .AnyAsync(x =>
+                    x.PhoneNumber == request.PhoneNumber &&
+                    x.Id != request.Id &&
+                    !x.IsDeleted);
 
             if (phoneExists)
             {
@@ -81,6 +87,7 @@ public class UserService : IUserService
         user.FullName = request.FullName.Trim();
         user.PhoneNumber = request.PhoneNumber;
         user.CurrentNeighborhoodId = request.CurrentNeighborhoodId;
+        user.UpdatedDate = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
@@ -96,7 +103,9 @@ public class UserService : IUserService
         var response = new BaseResponse<bool>();
 
         var user = await _context.AppUsers
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x =>
+                x.Id == id &&
+                !x.IsDeleted);
 
         if (user == null)
         {
@@ -106,7 +115,10 @@ public class UserService : IUserService
             return response;
         }
 
-        _context.AppUsers.Remove(user);
+        user.IsActive = false;
+        user.IsDeleted = true;
+        user.UpdatedDate = DateTime.UtcNow;
+
         await _context.SaveChangesAsync();
 
         response.Success = true;
@@ -120,6 +132,7 @@ public class UserService : IUserService
     {
         return _context.AppUsers
             .AsNoTracking()
+            .Where(x => x.IsActive && !x.IsDeleted)
             .Include(x => x.CurrentNeighborhood)
             .Select(x => new UserResponse
             {
@@ -134,7 +147,8 @@ public class UserService : IUserService
                     ? x.CurrentNeighborhood.Name
                     : null,
                 CreatedDate = x.CreatedDate,
-                LastLoginDate = x.LastLoginDate
+                LastLoginDate = x.LastLoginDate,
+                MembershipType = x.MembershipType
             });
     }
 }

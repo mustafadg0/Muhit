@@ -35,12 +35,13 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 app.UseGlobalExceptionMiddleware();
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//    app.UseSwaggerUI();
+//}
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
 // JWT ekleyince bunun üstüne app.UseAuthentication(); gelecek

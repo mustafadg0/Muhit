@@ -1,5 +1,4 @@
-﻿using Azure;
-using Muhit.Application.Common;
+﻿using Muhit.Application.Common;
 using Muhit.Application.DTOs.Neighborhood.Request;
 using Muhit.Application.DTOs.Neighborhood.Response;
 using Muhit.Application.Interfaces;
