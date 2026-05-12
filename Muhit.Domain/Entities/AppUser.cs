@@ -18,6 +18,7 @@ namespace Muhit.Domain.Entities
         public string PasswordHash { get; set; } = null!;
         public string PasswordSalt { get; set; } = null!;
         public int? CurrentNeighborhoodId { get; set; }
+        public string? ProfileImageUrl { get; set; }
         public DateTime? LastLoginDate { get; set; }
         public Neighborhood? CurrentNeighborhood { get; set; }
         public MembershipType MembershipType { get; set; }  = MembershipType.Free;

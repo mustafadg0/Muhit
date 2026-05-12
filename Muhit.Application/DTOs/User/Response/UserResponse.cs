@@ -20,5 +20,6 @@ namespace Muhit.Application.DTOs.User.Response
         public DateTime CreatedDate { get; set; }
         public DateTime? LastLoginDate { get; set; }
         public MembershipType MembershipType { get; set; }
+        public string? ProfileImageUrl { get; set; }
     }
 }
