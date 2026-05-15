@@ -9,7 +9,7 @@ namespace Muhit.Application.DTOs.Neighborhood.Response
     public class NeighborhoodReviewItemResponse
     {
         public int Id { get; set; }
-        public int AppUserId { get; set; }
+        public int? AppUserId { get; set; }
         public string UserFullName { get; set; } = null!;
         public string? Comment { get; set; }
         public int SafetyScore { get; set; }

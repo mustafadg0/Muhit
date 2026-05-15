@@ -15,6 +15,7 @@ namespace Muhit.Persistence.Context
         public DbSet<NeighborhoodReview> NeighborhoodReviews => Set<NeighborhoodReview>();
         public DbSet<AppUser> AppUsers => Set<AppUser>();
         public DbSet<NeighborhoodAiAnalysis> NeighborhoodAiAnalyses => Set<NeighborhoodAiAnalysis>();
+        public DbSet<NeighborhoodAmenitySummary> NeighborhoodAmenitySummaries => Set<NeighborhoodAmenitySummary>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -46,11 +47,25 @@ namespace Muhit.Persistence.Context
                 .HasForeignKey(x => x.NeighborhoodId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<NeighborhoodAmenitySummary>()
+                .HasOne(x => x.Neighborhood)
+                .WithOne(x => x.AmenitySummary)
+                .HasForeignKey<NeighborhoodAmenitySummary>(x => x.NeighborhoodId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<NeighborhoodAmenitySummary>()
+                .HasIndex(x => x.NeighborhoodId)
+                .IsUnique();
+
             modelBuilder.Entity<NeighborhoodAiAnalysis>()
                 .HasOne(x => x.Neighborhood)
-                .WithOne()
+                .WithOne(x => x.AiAnalysis)
                 .HasForeignKey<NeighborhoodAiAnalysis>(x => x.NeighborhoodId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<NeighborhoodAiAnalysis>()
+                .HasIndex(x => x.NeighborhoodId)
+                .IsUnique();
         }
     }
 }

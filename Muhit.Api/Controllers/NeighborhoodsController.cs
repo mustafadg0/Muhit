@@ -8,10 +8,17 @@ namespace Muhit.Api.Controllers
     public class NeighborhoodsController : ControllerBase
     {
         private readonly INeighborhoodService _neighborhoodService;
+        private readonly INeighborhoodDetailService _neighborhoodDetailService;
+        private readonly INeighborhoodAiAnalysisAppService _aiAnalysisAppService;
 
-        public NeighborhoodsController(INeighborhoodService neighborhoodService)
+        public NeighborhoodsController(
+            INeighborhoodService neighborhoodService,
+            INeighborhoodDetailService neighborhoodDetailService,
+            INeighborhoodAiAnalysisAppService aiAnalysisAppService)
         {
             _neighborhoodService = neighborhoodService;
+            _neighborhoodDetailService = neighborhoodDetailService;
+            _aiAnalysisAppService = aiAnalysisAppService;
         }
 
         [HttpGet("GetAll")]
@@ -51,6 +58,34 @@ namespace Muhit.Api.Controllers
         public async Task<IActionResult> Search([FromQuery] string keyword)
         {
             var result = await _neighborhoodService.SearchAsync(keyword);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpGet("Detail")]
+        public async Task<IActionResult> GetDetail(
+            [FromQuery] string city,
+            [FromQuery] string district,
+            [FromQuery] string neighborhood)
+        {
+            var result = await _neighborhoodDetailService.GetDetailAsync(
+                city,
+                district,
+                neighborhood);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpPost("{neighborhoodId}/GenerateAiAnalysis")]
+        public async Task<IActionResult> GenerateAiAnalysis(int neighborhoodId)
+        {
+            var result = await _aiAnalysisAppService.GenerateAsync(neighborhoodId);
 
             if (!result.Success)
                 return BadRequest(result);

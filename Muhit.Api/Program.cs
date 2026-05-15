@@ -29,6 +29,13 @@ builder.Services.AddScoped<INeighborhoodHomeService, NeighborhoodHomeService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 
+builder.Services.AddScoped<INeighborhoodAmenityService, NeighborhoodAmenityService>();
+builder.Services.AddScoped<INeighborhoodDetailService, NeighborhoodDetailService>();
+builder.Services.AddScoped<INeighborhoodAiAnalysisAppService, NeighborhoodAiAnalysisAppService>();
+
+builder.Services.AddHttpClient<IGoogleGeocodingService, GoogleGeocodingService>();
+builder.Services.AddHttpClient<IGooglePlacesService, GooglePlacesService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
