@@ -8,7 +8,7 @@ namespace Muhit.Application.DTOs.Neighborhood.Response
 {
     public class NeighborhoodAiCategoryScoreResponse
     {
-        public int Score { get; set; }
+        public double Score { get; set; }
         public string Comment { get; set; } = null!;
     }
 }

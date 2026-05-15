@@ -33,6 +33,10 @@ builder.Services.AddScoped<INeighborhoodAmenityService, NeighborhoodAmenityServi
 builder.Services.AddScoped<INeighborhoodDetailService, NeighborhoodDetailService>();
 builder.Services.AddScoped<INeighborhoodAiAnalysisAppService, NeighborhoodAiAnalysisAppService>();
 
+
+builder.Services.AddScoped<ICityService, CityService>();
+builder.Services.AddScoped<IDistrictService, DistrictService>();
+
 builder.Services.AddHttpClient<IGoogleGeocodingService, GoogleGeocodingService>();
 builder.Services.AddHttpClient<IGooglePlacesService, GooglePlacesService>();
 
