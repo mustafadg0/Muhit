@@ -17,6 +17,9 @@ namespace Muhit.Application.DTOs.Neighborhood.Response
         public int ReviewCount { get; set; }
         public decimal AverageScore { get; set; }
         public List<NeighborhoodReviewItemResponse> UserReviews { get; set; } = new();
+        public NeighborhoodAmenitySummaryResponse? AmenitySummary { get; set; }
         public NeighborhoodAiAnalysisResponse? AiAnalysis { get; set; }
+        public List<NeighborhoodPlaceItemResponse> TopRestaurants { get; set; } = new();
+        public List<NeighborhoodPlaceItemResponse> TopCafes { get; set; } = new();
     }
 }

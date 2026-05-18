@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Muhit.Application.DTOs.Google;
+using Muhit.Application.DTOs.Google.Response;
 using Muhit.Application.Interfaces;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
@@ -85,16 +86,54 @@ public class GooglePlacesService : IGooglePlacesService
 
         return result?.Places?.Count ?? 0;
     }
-}
 
-public class GoogleNearbySearchResponse
-{
-    [JsonPropertyName("places")]
-    public List<GooglePlace> Places { get; set; } = new();
-}
+    public async Task<List<GooglePlace>> GetTopPlacesAsync(
+    double latitude,
+    double longitude,
+    int radiusMeters,
+    string placeType)
+    {
+        var apiKey = _configuration["GoogleMaps:ApiKey"];
 
-public class GooglePlace
-{
-    [JsonPropertyName("id")]
-    public string Id { get; set; }
+        var body = new
+        {
+            includedTypes = new[] { placeType },
+            maxResultCount = 20,
+            rankPreference = "POPULARITY",
+            locationRestriction = new
+            {
+                circle = new
+                {
+                    center = new
+                    {
+                        latitude,
+                        longitude
+                    },
+                    radius = radiusMeters
+                }
+            },
+            languageCode = "tr",
+            regionCode = "TR"
+        };
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            "https://places.googleapis.com/v1/places:searchNearby");
+
+        request.Headers.Add("X-Goog-Api-Key", apiKey);
+        request.Headers.Add(
+            "X-Goog-FieldMask",
+            "places.id,places.types,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.displayName");
+
+        request.Content = JsonContent.Create(body);
+
+        var response = await _httpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+            return new List<GooglePlace>();
+
+        var result = await response.Content.ReadFromJsonAsync<GoogleNearbySearchResponse>();
+
+        return result?.Places ?? new List<GooglePlace>();
+    }
 }

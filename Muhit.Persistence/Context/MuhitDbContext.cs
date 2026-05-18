@@ -16,6 +16,7 @@ namespace Muhit.Persistence.Context
         public DbSet<AppUser> AppUsers => Set<AppUser>();
         public DbSet<NeighborhoodAiAnalysis> NeighborhoodAiAnalyses => Set<NeighborhoodAiAnalysis>();
         public DbSet<NeighborhoodAmenitySummary> NeighborhoodAmenitySummaries => Set<NeighborhoodAmenitySummary>();
+        public DbSet<NeighborhoodPlace> NeighborhoodPlaces => Set<NeighborhoodPlace>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

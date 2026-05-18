@@ -94,9 +94,77 @@ public class NeighborhoodHomeService : INeighborhoodHomeService
         };
 
         var aiResult = await _aiNeighborhoodAnalysisService.GenerateAsync(aiRequest);
+        var topRestaurants = await _context.NeighborhoodPlaces
+                        .AsNoTracking()
+                        .Where(x =>
+                            x.NeighborhoodId == neighborhoodId &&
+                            x.PrimaryType == "restaurant" &&
+                            x.IsActive &&
+                            !x.IsDeleted)
+                        .OrderByDescending(x => x.UserRatingCount)
+                        .ThenByDescending(x => x.Rating)
+                        .Take(10)
+                        .Select(x => new NeighborhoodPlaceItemResponse
+                        {
+                            Id = x.Id,
+                            GooglePlaceId = x.GooglePlaceId,
+                            Name = x.Name,
+                            FormattedAddress = x.FormattedAddress,
+                            Latitude = x.Latitude,
+                            Longitude = x.Longitude,
+                            Rating = x.Rating,
+                            UserRatingCount = x.UserRatingCount,
+                            PrimaryType = x.PrimaryType
+                        })
+                        .ToListAsync();
+
+        var topCafes = await _context.NeighborhoodPlaces
+                                .AsNoTracking()
+                                .Where(x =>
+                                    x.NeighborhoodId == neighborhoodId &&
+                                    x.PrimaryType == "cafe" &&
+                                    x.IsActive &&
+                                    !x.IsDeleted)
+                                .OrderByDescending(x => x.UserRatingCount)
+                                .ThenByDescending(x => x.Rating)
+                                .Take(10)
+                                .Select(x => new NeighborhoodPlaceItemResponse
+                                {
+                                    Id = x.Id,
+                                    GooglePlaceId = x.GooglePlaceId,
+                                    Name = x.Name,
+                                    FormattedAddress = x.FormattedAddress,
+                                    Latitude = x.Latitude,
+                                    Longitude = x.Longitude,
+                                    Rating = x.Rating,
+                                    UserRatingCount = x.UserRatingCount,
+                                    PrimaryType = x.PrimaryType
+                                })
+                                .ToListAsync();
+
+        var amenitySummary = await _context.NeighborhoodAmenitySummaries
+                                .AsNoTracking()
+                                .Where(x =>
+                                    x.NeighborhoodId == neighborhoodId &&
+                                    x.IsActive &&
+                                    !x.IsDeleted)
+                                .Select(x => new NeighborhoodAmenitySummaryResponse
+                                {
+                                    CafeCount = x.CafeCount,
+                                    RestaurantCount = x.RestaurantCount,
+                                    MarketCount = x.MarketCount,
+                                    HospitalCount = x.HospitalCount,
+                                    PharmacyCount = x.PharmacyCount,
+                                    SchoolCount = x.SchoolCount,
+                                    ParkCount = x.ParkCount,
+                                    GymCount = x.GymCount,
+                                    RadiusMeters = x.RadiusMeters,
+                                    LastUpdatedAt = x.LastUpdatedAt
+                                })
+                                .FirstOrDefaultAsync();
 
         response.Success = true;
-        response.Message = "Mahalle ana sayfa verisi başarıyla getirildi.";
+        response.Message = "Mahalle detay verisi başarıyla getirildi.";
         response.Data = new NeighborhoodHomeResponse
         {
             NeighborhoodId = neighborhood.Id,
@@ -108,7 +176,10 @@ public class NeighborhoodHomeService : INeighborhoodHomeService
             ReviewCount = reviews.Count,
             AverageScore = averageScore,
             UserReviews = reviews,
-            AiAnalysis = aiResult.Success ? aiResult.Data : null
+            AiAnalysis = aiResult.Success ? aiResult.Data : null,
+            TopRestaurants = topRestaurants,
+            TopCafes = topCafes,
+            AmenitySummary = amenitySummary
         };
 
         return response;
